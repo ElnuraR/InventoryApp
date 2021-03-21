@@ -101,15 +101,22 @@ public class ArticleActivity extends AppCompatActivity {
 
     public void saveArticle() {
         String name = editName.getText().toString();
-        int price = Integer.parseInt(editPrice.getText().toString());
+        if (name.trim().isEmpty()) {
+            Toast.makeText(this, "Please insert name of the article", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int price = 0;
+        try {
+            price = Integer.parseInt(editPrice.getText().toString());
+        }catch (NumberFormatException e){
+            Toast.makeText(this, "Please insert price of the article", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         int quantity = editQuantity.getValue();
         String supplier = editSupplier.getText().toString();
         String image = imagePath;
-
-        if (name.trim().isEmpty()) {
-            Toast.makeText(this, "Please insert name and price", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         Intent data = new Intent();
         data.putExtra(EXTRA_NAME, name);
