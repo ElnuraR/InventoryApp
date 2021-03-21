@@ -1,11 +1,15 @@
 package com.example.inventoryapp.view;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -23,11 +27,15 @@ import com.bumptech.glide.Glide;
 import com.example.inventoryapp.R;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ArticleActivity extends AppCompatActivity {
+    public static final int REQUEST_IMAGE_ARTICLE = 1;
+
     public static final String EXTRA_ID =
             "com.example.inventoryapp.view.EXTRA_ID";
     public static final String EXTRA_NAME =
@@ -48,6 +56,8 @@ public class ArticleActivity extends AppCompatActivity {
     private EditText editSupplier;
     private ImageView editImage;
     private String imagePath;
+
+    File imageFile = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +90,10 @@ public class ArticleActivity extends AppCompatActivity {
             editPrice.setText(String.valueOf(intent.getIntExtra(EXTRA_PRICE, 1)));
             editQuantity.setValue(intent.getIntExtra(EXTRA_QUANTITY, 1));
             editSupplier.setText(intent.getStringExtra(EXTRA_SUPPLIER));
-            editImage.setImageURI(Uri.parse(intent.getStringExtra(EXTRA_IMAGE)));
+
+            imagePath = intent.getStringExtra(EXTRA_IMAGE);
+            Bitmap map = BitmapFactory.decodeFile(imagePath);
+            editImage.setImageBitmap(map);
         } else {
             setTitle("Add Article");
         }
@@ -88,23 +101,15 @@ public class ArticleActivity extends AppCompatActivity {
 
     public void saveArticle() {
         String name = editName.getText().toString();
-        if (name.trim().isEmpty()) {
-            Toast.makeText(this, "Please insert a name", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int price = 0;
-        try {
-            price = Integer.parseInt(editPrice.getText().toString());
-        }catch (NumberFormatException e){
-            Toast.makeText(this, "Please insert a correct price", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+        int price = Integer.parseInt(editPrice.getText().toString());
         int quantity = editQuantity.getValue();
         String supplier = editSupplier.getText().toString();
         String image = imagePath;
 
+        if (name.trim().isEmpty()) {
+            Toast.makeText(this, "Please insert name and price", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Intent data = new Intent();
         data.putExtra(EXTRA_NAME, name);
@@ -143,7 +148,6 @@ public class ArticleActivity extends AppCompatActivity {
     public void setImagePath(View view) {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (cameraIntent.resolveActivity(getPackageManager()) != null) {
-            File imageFile = null;
             try {
                 imageFile = getImagePath();
             } catch (IOException e) {
@@ -155,7 +159,7 @@ public class ArticleActivity extends AppCompatActivity {
                         "com.example.android.fileProvider", imageFile);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUrl);
                 Glide.with(this).load(imageFile).into(editImage);
-                startActivityForResult(cameraIntent, 1);
+                startActivityForResult(cameraIntent, REQUEST_IMAGE_ARTICLE);
             }
         }
     }
@@ -165,7 +169,7 @@ public class ArticleActivity extends AppCompatActivity {
         String name = "jpg_" + time + "_";
         File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
-        File imageFile = File.createTempFile(name, ".jpeg", directory);
+        File imageFile = File.createTempFile(name, ".jpg", directory);
         imagePath = imageFile.getAbsolutePath();
         return imageFile;
     }
